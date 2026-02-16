@@ -1,0 +1,48 @@
+[project]
+name = "waldur-site-agent-openstack"
+version = "0.1.0"
+description = "OpenStack Keystone plugin for Waldur Site Agent - Real-time user synchronization"
+readme = "README.md"
+authors = [
+    { name = "Ahcene", email = "abelhadi.work@gmail.com" }
+]
+requires-python = ">=3.9, <4"
+license = { text = "MIT" }
+
+dependencies = [
+    "waldur-site-agent>=0.7.8",
+    "python-keystoneclient>=5.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Entry points for plugin discovery
+[project.entry-points."waldur_site_agent.backends"]
+openstack = "waldur_site_agent_openstack.backends:OpenStackBackend"
+
+[project.entry-points."waldur_site_agent.username_management_backends"]
+openstack_keystone = "waldur_site_agent_openstack.backends:OpenStackUsernameManagementBackend"
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"

@@ -1,0 +1,85 @@
+# Environment variables
+.env
+.env.local
+test.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv
+venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Logs
+*.log
+logs/
+
+# Sensitive configuration files (contain real credentials/tokens)
+test.env
+#test-config.yaml
+test-config-final.yaml
+*.secret
+credentials.json
+secrets/
+
+# TLS/SSL certificates
+*.pem
+tls-certificates/
+custom-ca-bundle.pem
+
+# Presentation files (personal, not part of the plugin)
+prez.md
+prez1.md
+stage_prez.md
+presentation_stage.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+.temp/

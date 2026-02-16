@@ -1,0 +1,146 @@
+# ============================================================================
+# Configuration de test pour waldur-site-agent + plugin OpenStack
+# ============================================================================
+# Ce fichier utilise les variables d'environnement définies dans test.env
+# ============================================================================
+
+offerings:
+  - name: "openstack offering"
+    waldur_api_url: "${WALDUR_API_URL}"
+    waldur_api_token: "${WALDUR_API_TOKEN}"
+    waldur_offering_uuid: "${WALDUR_OFFERING_UUID}"
+
+    # Configuration SSL/TLS pour l'API Waldur et WebSocket
+    verify_ssl: "/home/debian/openstack_waldur_site_agent/custom-ca-bundle.pem"                           # Accepter les certificats auto-signés
+    websocket_use_tls: true                    # Désactiver TLS pour WebSocket (test)
+
+    # ========================================================================
+    # BACKEND - Configuration du plugin OpenStack
+    # ========================================================================
+    backend_type: "openstack"
+
+    backend_settings:
+      # Keystone authentication
+      auth_url: "${OPENSTACK_AUTH_URL}"
+      username: "${OPENSTACK_USERNAME}"
+      password: "${OPENSTACK_PASSWORD}"
+      project_name: "${OPENSTACK_PROJECT_NAME}"
+      user_domain_name: "${OPENSTACK_USER_DOMAIN_NAME}"
+      project_domain_name: "${OPENSTACK_PROJECT_DOMAIN_NAME}"
+
+      # Plugin behavior
+      default_role: "${OPENSTACK_DEFAULT_ROLE}"
+      create_users_if_not_exist: ${OPENSTACK_CREATE_USERS}
+      sync_user_emails: ${OPENSTACK_SYNC_EMAILS}
+      verify_ssl: ${OPENSTACK_VERIFY_SSL}
+
+      # Extra settings for testing
+      #default_account: "root" # Default parent account name in SLURM cluster
+      # for new ones
+      customer_prefix: "crd_" # Prefix for customer's accounts.
+      project_prefix: "crd_" # Prefix for project's accounts.
+      
+      #allocation_prefix: "crd_" # Prefix used for allocation's accounts.
+      # created by the agent.
+      #qos_downscaled: "limited" # The QoS set to an account after downscaling
+      #qos_paused: "paused" # The QoS set to an account after pausing
+      #qos_default: "normal" # The default QoS for account in the SLURM cluster
+      #enable_user_homedir_account_creation: true # Whether to create home directories
+
+      
+    # BACKEND COMPONENTS - Définition des ressources (cpu, ram, etc.)
+    backend_components:
+      vCPU:
+        type: "vCPU"
+        name: "vCPU"
+        measured_unit: "vcpu"
+        description: "Virtual CPU cores"
+        accounting_type: "usage"
+        label: "vCPU"
+      RAM:
+        type: "RAM"
+        name: "RAM"
+        measured_unit: "Go"
+        description: "Memory in Gigabytes"
+        accounting_type: "usage"
+        label: "RAM"
+      Stockage_bande:
+        type: "Stockage_bande"
+        name: "Stockage_bande"
+        measured_unit: "Go"
+        description: "Tape storage in Gigabytes"
+        accounting_type: "usage"
+        label: "stockage bande"
+      Stockage_chaud:
+        type: "stockage_chaud"
+        name: "stockage_chaud"
+        measured_unit: "Go"
+        description: "Hot storage in Gigabytes"
+        accounting_type: "usage"
+        label: "stockage chaud"
+      Stockage_froid:
+        type: "Stockage_froid"
+        name: "Stockage_froid"
+        measured_unit: "Go"
+        description: "Cold storage in Gigabytes"
+        accounting_type: "usage"
+        label: "stockage_froid"
+      
+      vcpu2: # test avec les nouveaux composants
+        type: "vcpu2-type"
+        name: "vcpu2-name"
+        limit: 128
+        measured_unit: "coeurs"
+        unit_factor: 1
+        accounting_type: "limit"  
+        label: "vcpu-label"
+      ram2:
+        type: "ram2-type"
+        name: "ram2-name"
+        limit: 524288
+        measured_unit: "MB"
+        unit_factor: 1
+        accounting_type: "limit"
+        label: "ram-label"
+      storage2:
+        type: "storage2-type"
+        name: "storage2-name"
+        limit: 10240
+        measured_unit: "GB"
+        unit_factor: 1
+        accounting_type: "limit"
+        label: "storage-label"
+
+    # BACKEND ASSIGNMENT - Quelles fonctions le backend gère
+    membership_sync_backend: "openstack"     # Sync users
+    order_processing_backend: "openstack"    # Create/delete resources
+    username_management_backend: "openstack_keystone"
+    # reporting_backend: "openstack"         # Reporting (pas encore)
+    # username_management_backend: "openstack"  # Username generation (pas encore)
+
+    # RABBITMQ / STOMP - Pour event-process mode (temps réel)
+    # ========================================================================
+    # Configuration pour tester en mode event-process
+    # Nécessite RabbitMQ accessible depuis le cluster en websocket
+    # IMPORTANT: Les noms de paramètres doivent correspondre au cod
+    stomp_enabled: true
+    stomp_ws_host: "${STOMP_HOST}"              # Nom corrigé: stomp_ws_host
+    stomp_ws_port: ${STOMP_PORT}                # Nom corrigé: stomp_ws_port
+    stomp_ws_path: "/${STOMP_PATH}"               # Nom corrigé: stomp_ws_path (chemin WebSocket)
+
+# ============================================================================
+# NOTES D'UTILISATION
+# ============================================================================
+#
+# MODE 1: membership-sync
+#   - Polling périodique des utilisateurs
+#   - Pas besoin de STOMP
+#   - Commande: waldur_site_agent --mode membership-sync --config-file test-config-final.yaml
+#
+# MODE 2: event-process (temps réel)
+#   - Écoute les événements STOMP en temps réel
+#   - Nécessite RabbitMQ accessible
+#   - Décommenter la section stomp_* ci-dessus
+#   - Commande: waldur_site_agent --mode event-process --config-file ou (-c) test-config-final.yaml
+#
+# ============================================================================

@@ -1,0 +1,117 @@
+# ============================================================================
+# Kubernetes Job: Setup Initial de Waldur (load components)
+# ============================================================================
+# Ce Job exécute waldur_site_load_components UNE FOIS pour configurer
+# l'offering dans Waldur avec les composants définis (cpu, ram, etc.)
+#
+# À exécuter AVANT de déployer l'agent principal.
+#
+# Usage:
+#   kubectl apply -f kubernetes/setup-job.yaml
+#   kubectl logs job/waldur-load-components -n waldur-agent
+#   kubectl delete job waldur-load-components -n waldur-agent  # Une fois terminé
+# ============================================================================
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: waldur-load-components
+  namespace: waldur-agent
+  labels:
+    app: waldur-site-agent-openstack
+    component: setup
+spec:
+  # Ne pas relancer automatiquement si succès
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 600  # Garder le job 10 min après succès pour voir les logs
+
+  template:
+    metadata:
+      labels:
+        app: waldur-site-agent-openstack
+        component: setup
+    spec:
+      restartPolicy: OnFailure
+
+      serviceAccountName: waldur-agent
+
+      containers:
+      - name: load-components
+        image: waldur-site-agent-openstack:0.1.0
+        imagePullPolicy: IfNotPresent
+
+        # ====================================================================
+        # COMMANDE : Charger les composants dans Waldur
+        # ====================================================================
+        command:
+        - waldur_site_load_components
+        - -c
+        - /etc/waldur-agent/config.yaml
+
+        # Variables d'environnement (secrets)
+        env:
+        - name: WALDUR_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: waldur-agent-secrets
+              key: WALDUR_API_TOKEN
+        - name: OPENSTACK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: waldur-agent-secrets
+              key: OPENSTACK_PASSWORD
+        - name: STOMP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: waldur-agent-secrets
+              key: STOMP_PASSWORD
+
+        # Monter la config
+        volumeMounts:
+        - name: config
+          mountPath: /etc/waldur-agent
+          readOnly: true
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+
+      volumes:
+      - name: config
+        configMap:
+          name: waldur-agent-config
+
+# ============================================================================
+# Utilisation
+# ============================================================================
+#
+# 1. Appliquer le Job (UNE FOIS au début)
+#    kubectl apply -f kubernetes/setup-job.yaml
+#
+# 2. Suivre l'exécution
+#    kubectl get jobs -n waldur-agent
+#    kubectl logs job/waldur-load-components -n waldur-agent -f
+#
+# 3. Vérifier le succès
+#    kubectl get job waldur-load-components -n waldur-agent
+#    # Status devrait être "Complete"
+#
+# 4. Nettoyer après succès
+#    kubectl delete job waldur-load-components -n waldur-agent
+#
+# 5. ENSUITE déployer l'agent principal
+#    kubectl apply -f kubernetes/deployment.yaml
+#
+# ============================================================================
+#
+# Note: Cette commande configure l'offering dans Waldur avec les composants
+# définis dans backend_components (cpu, ram, gpu, etc.). Elle doit être
+# exécutée AVANT que l'agent ne commence à synchroniser.
+#
+# Si vous modifiez les composants, relancez ce Job.
+# ============================================================================
