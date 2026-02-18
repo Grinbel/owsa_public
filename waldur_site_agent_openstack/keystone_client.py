@@ -234,8 +234,6 @@ class KeystoneClient:
             self.keystone.projects.update(project, enabled=False)
             logger.info(f"✓ Disabled project: {project_name}")
 
-            self.keystone.projects.update(project, enabled=False)
-            logger.info(f"✓ Disabled project: {project_name}")
 
     # ========================================================================
     # USER OPERATIONS
